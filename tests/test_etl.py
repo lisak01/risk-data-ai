@@ -115,3 +115,11 @@ def test_client_gives_clear_error_when_unreachable(monkeypatch):
 def test_client_404_means_no_new_data(monkeypatch):
     monkeypatch.setattr(ecb_client.requests, "get", lambda *a, **k: FakeResponse(404))
     assert EcbClient(backoff=0).fetch("2030-01-01").empty
+
+
+def test_ecb_holiday_rows_are_dropped_but_other_gaps_are_not():
+    text = ("TIME_PERIOD,OBS_VALUE,OBS_STATUS\n"
+            "2010-04-01,1.35,A\n2010-04-02,,H\n2010-04-06,1.34,A\n2010-04-07,,A\n")
+    df = ecb_client.parse_ecb_csv(text)
+    assert len(df) == 3  # holiday row removed
+    assert etl.check_batch(df)["valid_values"] is False  # empty value without H is an error

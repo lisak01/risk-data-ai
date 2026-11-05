@@ -110,6 +110,12 @@ def parse_ecb_csv(text: str) -> pd.DataFrame:
     if missing:
         raise SourceError(f"Unexpected ECB CSV format, missing columns: {missing}")
 
+    # Until 2012 the ECB also sends TARGET holidays as rows without a value and
+    # OBS_STATUS = "H" (holiday). They are not observations, so they are dropped here.
+    # Any other empty value stays and is stopped by the quality checks in the ETL.
+    if "OBS_STATUS" in raw.columns:
+        raw = raw[raw["OBS_STATUS"] != "H"]
+
     return pd.DataFrame({
         # errors="coerce": invalid dates/values become NaT/NaN and are reported
         # by the quality checks instead of crashing here.

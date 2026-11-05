@@ -206,9 +206,15 @@ def build_html(d: dict) -> str:
     zone = bt["basel_zone"]
     zone_color = {"Green": GOOD, "Yellow": WARN, "Red": BAD}[zone]
     coverage = 1 - bt["exceptions_last"] / bt["n_last"]
-    kupiec_pass = bt["kupiec_p_last"] > 0.05
-    kupiec = ('<span class="good">✓ Pass</span>' if kupiec_pass
-              else '<span class="bad">✗ Reject</span>')
+    # Kupiec is two-sided: it rejects too many AND too few exceptions.
+    expected_exc = bt["n_last"] * (1 - config.VAR_CONFIDENCE)
+    if bt["kupiec_p_last"] > 0.05:
+        kupiec = '<span class="good">✓ Pass</span>'
+    elif bt["exceptions_last"] < expected_exc:
+        kupiec = '<span class="warn">Conservative</span>'  # fewer losses than VaR predicts
+    else:
+        kupiec = '<span class="bad">✗ Reject</span>'
+    kupiec_note = (f"Expected {expected_exc:.1f} exceptions, p = {bt['kupiec_p_last']:.2f}")
 
     # Key observations (generated from the numbers, no hand-written claims)
     diff_param = s["var_eur"] / s["param_var_eur"] - 1
@@ -261,7 +267,7 @@ def build_html(d: dict) -> str:
         "BT_CHART": fig_html(backtest_chart(roll)),
         "RING": coverage_ring(coverage, zone_color),
         "EXC_LAST": f"{bt['exceptions_last']} / {bt['n_last']}",
-        "KUPIEC": kupiec, "ZONE": zone, "ZONE_COLOR": zone_color,
+        "KUPIEC": kupiec, "KUPIEC_NOTE": kupiec_note, "ZONE": zone, "ZONE_COLOR": zone_color,
         "BT_FULL": (f"Full history {bt['start']:%Y}-{bt['end']:%Y}: {bt['exceptions']} exceptions "
                     f"in {bt['n']:,} days ({pct(bt['rate'], 1)}, expected 1.0%), Kupiec p = "
                     f"{bt['kupiec_p']:.2f}. Non-overlapping windows only: "

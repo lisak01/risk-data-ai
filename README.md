@@ -59,9 +59,16 @@ weekends, 1 January, Good Friday, Easter Monday, 1 May, 25 and 26 December. The 
 check knows these days and reports only other missing weekdays (for example early
 years with different closing days).
 
-**HTTP 404 = no data.** The API answers 404 "No results found" if the requested
-period has no observation yet (e.g. a daily run before publication). The ETL logs
-this as `NO_NEW_DATA`, not as an error.
+**ECB holiday rows.** Until 2012 the API also returns TARGET holidays as rows with an
+empty value and `OBS_STATUS = H`. The adapter drops these rows; any other empty value
+still stops the load. The holiday rows also showed that 31 December was a TARGET
+holiday in 1999-2001, which the gap check now knows.
+
+**Empty answers.** A period without observations (e.g. a weekend) comes back as an empty
+body with HTTP 200. The API answers 404 "No results found" in some cases; both are
+treated as no new data.
+
+The ETL logs this as `NO_NEW_DATA`, not as an error.
 
 **Inspect the data**
 
@@ -134,13 +141,19 @@ Limits of the backtest:
   A second Kupiec test on non-overlapping windows (every 5th day) is shown as a check.
 - The Basel traffic light is defined for 1-day VaR on 250 days; here it is a guide only.
 
+**Result on 2026-11-05** (rate 1.1224 USD per EUR, position worth EUR 89,095):
+5-day VaR 99% = **EUR 2,352** (2.64%), ES 97.5% = EUR 2,351, normal benchmark EUR 1,914,
+1-year window EUR 1,720. Backtest 2001-2026: 72 exceptions in 6,371 days (1.1%, expected 1%),
+Kupiec p = 0.31. Last 250 days: 0 exceptions, Basel green, Kupiec flags the model as
+conservative (recent volatility is below the 3-year average).
+
 **Traceability.** Every number on the dashboard comes from `fx_rates` and is stored
 again in the DuckDB table `fx_risk_history` (VaR, ES, benchmark, realised loss,
 exception flag per day).
 
 **Assumptions and limitations** (also on the dashboard): conversion at the ECB
 reference rate without spread or fees; history represents the next 5 days; no
-intraday moves (ECB rate is a 14:10 CET snapshot); VaR does not show the size of
+intraday moves (ECB rate is a 2:15 pm CET snapshot); VaR does not show the size of
 losses beyond it.
 
 ## Task 2 - Index analysis

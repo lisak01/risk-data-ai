@@ -52,7 +52,7 @@
   .label { color: var(--muted); font-size: 13px; font-weight: 600; }
   .big { font-size: 28px; font-weight: 700; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
   .note { color: var(--muted); font-size: 13px; }
-  .good { color: var(--good); } .bad { color: var(--bad); }
+  .good { color: var(--good); } .bad { color: var(--bad); } .warn { color: var(--warn); }
   .badge { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 999px;
            font-size: 12px; font-weight: 600; }
   .badge.good { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.35); }
@@ -163,6 +163,7 @@
           <div>
             <div class="label">Exceptions</div><div class="val">{{EXC_LAST}}</div>
             <div class="label">Kupiec test</div><div class="val">{{KUPIEC}}</div>
+            <div class="note">{{KUPIEC_NOTE}}</div>
           </div>
           <div>
             <div class="label">Basel traffic light</div>
@@ -204,7 +205,7 @@
             Kupiec test is too optimistic. A non-overlapping check is shown under the backtest.</li>
           <li>The Basel traffic light was designed for 1-day VaR; here it is a guide only.</li>
           <li>VaR says nothing about the size of losses beyond it; ES fills part of that gap.</li>
-          <li>ECB rates are a daily snapshot (concertation at 14:10 CET); intraday moves are not captured.</li>
+          <li>ECB rates are a daily 2:15 pm CET snapshot; intraday moves are not captured.</li>
         </ul>
       </div>
     </section>

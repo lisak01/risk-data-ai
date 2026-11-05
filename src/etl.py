@@ -79,7 +79,8 @@ def check_batch(df: pd.DataFrame) -> dict:
 def target_holidays(years) -> set[pd.Timestamp]:
     """TARGET2 closing days: the ECB publishes no reference rate on these days.
 
-    New Year, Good Friday, Easter Monday, 1 May, 25 and 26 December.
+    New Year, Good Friday, Easter Monday, 1 May, 25 and 26 December;
+    in 1999-2001 also 31 December (confirmed by the ECB holiday rows, OBS_STATUS = H).
     """
     days = set()
     for y in years:
@@ -88,6 +89,8 @@ def target_holidays(years) -> set[pd.Timestamp]:
             pd.Timestamp(y, 1, 1), e - pd.Timedelta(days=2), e + pd.Timedelta(days=1),
             pd.Timestamp(y, 5, 1), pd.Timestamp(y, 12, 25), pd.Timestamp(y, 12, 26),
         }
+        if y <= 2001:
+            days.add(pd.Timestamp(y, 12, 31))
     return days
 
 
