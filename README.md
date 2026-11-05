@@ -66,9 +66,7 @@ holiday in 1999-2001, which the gap check now knows.
 
 **Empty answers.** A period without observations (e.g. a weekend) comes back as an empty
 body with HTTP 200. The API answers 404 "No results found" in some cases; both are
-treated as no new data.
-
-The ETL logs this as `NO_NEW_DATA`, not as an error.
+treated as no new data and logged as `NO_NEW_DATA`, not as an error.
 
 **Inspect the data**
 
