@@ -1,0 +1,9 @@
+# Pinned versions (tested with Python 3.13; Python 3.12 is supported by all of them)
+duckdb==2.0.0
+pandas==3.0.5
+pyarrow==26.0.1
+python-dateutil==2.9.0.post0
+requests==2.34.2
+plotly==7.1.0
+pytest==9.2.0
+ruff==0.17.3
