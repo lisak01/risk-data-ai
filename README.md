@@ -91,7 +91,57 @@ In a bank setup the same command would run in the central scheduler
 
 ## Task 1b - FX-risk dashboard
 
-_Next step._
+```bash
+python run_daily.py          # ETL daily (initial if the DB is empty) + rebuild dashboard
+```
+
+Open `output/dashboard.html` in any browser. It is one self-contained file
+(Plotly embedded, works offline) and is rebuilt on every run. Building the dashboard
+only: `python -m src.dashboard`.
+
+**Position and quote direction.** The bank holds USD 100,000 and converts within
+5 days. The ECB quotes **USD per 1 EUR** (e.g. 1.08), so
+
+```
+EUR value = 100,000 / rate
+rate up   (stronger euro) -> fewer EUR -> loss
+rate down (weaker euro)   -> more EUR  -> gain
+```
+
+With a 5-day log return `r = ln(S_t+5 / S_t)` the relative loss is `1 - exp(-r)`.
+
+**Risk measures**
+
+| | Choice | Why |
+|---|---|---|
+| Main measure | 5-day VaR 99%, historical simulation | Standard in banks, easy to explain, no distribution assumption |
+| Additional | Expected Shortfall 97.5% | Basel FRTB measure; says how bad the tail is beyond VaR |
+| Benchmark | Parametric VaR: normal distribution, mean 0, √5 scaling | Shows the effect of fat tails |
+| Horizon | 5 trading days = 5 ECB publication days | Conversion "within 5 days"; we take the worst case: held for the full 5 days |
+| Returns | Overlapping 5-day returns, no √5 scaling | Uses the real 5-day distribution (incl. autocorrelation and fat tails); √5 assumes i.i.d. returns. √5 version shown for comparison |
+| Window | 750 days (~3 years) main, 250 days (~1 year) sensitivity | With 250 overlapping 5-day returns only ~50 are independent, the 1% quantile rests on 2-3 points. 3 years is more stable, 1 year reacts faster |
+| Quantile | `numpy.quantile`, linear interpolation | Documented, reproducible |
+
+**Backtest.** For every day t the VaR uses only data up to t (rolling window, no
+look-ahead). It is compared with the loss realised over the next 5 days.
+An exception is a realised loss above VaR. Reported:
+exceptions over the last 250 days, Kupiec POF test, Basel traffic light
+(0-4 green, 5-9 yellow, 10+ red), and the full history.
+
+Limits of the backtest:
+- Overlapping 5-day windows share 4 of 5 days, so exceptions are not independent and
+  come in clusters. The Kupiec test assumes independence and is therefore too optimistic.
+  A second Kupiec test on non-overlapping windows (every 5th day) is shown as a check.
+- The Basel traffic light is defined for 1-day VaR on 250 days; here it is a guide only.
+
+**Traceability.** Every number on the dashboard comes from `fx_rates` and is stored
+again in the DuckDB table `fx_risk_history` (VaR, ES, benchmark, realised loss,
+exception flag per day).
+
+**Assumptions and limitations** (also on the dashboard): conversion at the ECB
+reference rate without spread or fees; history represents the next 5 days; no
+intraday moves (ECB rate is a 14:10 CET snapshot); VaR does not show the size of
+losses beyond it.
 
 ## Task 2 - Index analysis
 

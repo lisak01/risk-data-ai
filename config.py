@@ -36,5 +36,26 @@ HTTP_BACKOFF_SECONDS = 2  # waits 2s, 4s, ... between attempts
 # Data-quality thresholds.
 MAX_ABS_DAILY_CHANGE = 0.05  # |rate change| > 5% in one day -> warning, not an error
 
-# --- Task 1b: FX position (filled in step 1b) ----------------------------------
+# --- Task 1b: FX position and risk model ---------------------------------------
+# The bank holds USD 100,000 and converts them into EUR within 5 days.
+# ECB quote is USD per 1 EUR, so: EUR value = POSITION_USD / rate.
 POSITION_USD = 100_000
+
+HORIZON_DAYS = 5  # trading days (= ECB publication days)
+VAR_CONFIDENCE = 0.99  # main measure: 5-day VaR 99%
+ES_CONFIDENCE = 0.975  # additional measure: Expected Shortfall 97.5%
+
+# Observation window for historical simulation, in trading days.
+WINDOW_DAYS = 750  # main: ~3 years -> ~750 overlapping 5-day scenarios
+WINDOW_DAYS_SHORT = 250  # sensitivity: ~1 year, reacts faster but is noisier
+
+# Backtest: Basel traffic light uses the last 250 observations.
+BACKTEST_DAYS = 250
+
+# Data older than this many calendar days is flagged as stale on the dashboard.
+STALE_AFTER_DAYS = 4
+
+# Text in the dashboard header (no logos or personal data in the repo).
+DASHBOARD_TITLE = "FX Risk Monitor"
+DASHBOARD_ORG = "Financial Risk"
+DASHBOARD_PATH = OUTPUT_DIR / "dashboard.html"
