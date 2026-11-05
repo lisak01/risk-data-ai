@@ -145,4 +145,50 @@ losses beyond it.
 
 ## Task 2 - Index analysis
 
-_Next step._
+```bash
+python -m src.index_analysis   # needs data/dim_master.csv and data/price_hist.parquet
+```
+
+Writes `output/index_analysis.html` (report with all charts, linked from the dashboard)
+and CSV tables in `output/` (correlation matrices, sensitivity, flagged outliers).
+
+**Question.** Are the indices more correlated in market distress?
+
+**Method**
+- Crisis day = VIX close above 30. Fixed, widely used stress level that does not move
+  with the sample (about 10% of days). Sensitivity: VIX 20, 25, 35, 40 and the 80% quantile (24.4).
+- VIX is only the crisis signal, not part of the correlations (30 equity indices remain).
+- Log returns per index on its own trading days. Pearson correlation, pairwise complete.
+- Average pairwise correlation = mean of the upper triangle of the matrix.
+- Weekly returns (Friday to Friday) as a check against the time-zone effect.
+- Forbes-Rigobon adjustment: `rho* = rho / sqrt(1 + delta * (1 - rho^2))`,
+  `delta` = variance ratio crisis/normal of the S&P 500 minus 1.
+
+**Result** (all numbers are reproduced by the script)
+
+| Average pairwise correlation | normal | crisis | crisis, FR-adjusted |
+|---|---|---|---|
+| Daily, outliers excluded (main) | 0.48 | 0.60 | 0.27 |
+| Weekly | 0.60 | 0.77 | 0.43 |
+
+- Yes: correlations are clearly higher in distress, for every VIX threshold.
+- After the volatility adjustment the effect disappears: the rise is explained by higher
+  volatility (interdependence, not contagion). For risk the raw number matters:
+  diversification is weakest when losses are largest.
+- Asia is least connected on normal days and rises most in crisis; Europe is most connected.
+
+**Data traps**
+
+| Trap | Finding | Treatment |
+|---|---|---|
+| Duplicate key | IXIC and NDX share `US6311011026`; naive join 152,559 instead of 143,211 rows, two prices per day | Split by price level (Composite higher until 2020, NASDAQ 100 higher from mid-2021). 344 days in 2020-21 where both are within 1% and cross are set to missing. Checked against 3 published closes |
+| Time zones | Asia, Europe, US close at different times | Weekly returns as comparison; weekly correlations are higher |
+| Outliers | 26 flagged, e.g. SDAX +17% and OMX Helsinki +10% on 2013-03-05 (after a 3-month data gap), KOSPI +16.5% on 2026-07-31 | Rule: \|z\| > 5 vs. trailing 250-day std while the median other index has \|z\| < 1.5 (same or next day), or a return across a gap > 14 days. Flagged, listed in `output/index_outliers.csv`, excluded from the main result; result with outliers shown too |
+| Weekend rows | 58 (special sessions India/Taiwan) | Dropped; the next close-to-close return covers the move |
+| Volume 0 | 25% of rows | Volume not used |
+| Start dates / holidays | UK 100 from 2010, TOPIX from 2011; different holidays | Own trading days per index, pairwise complete correlations, no forward-fill |
+
+**Limitations.** Crisis correlation is partly a volatility effect (Forbes-Rigobon). The
+adjustment assumes one source market and no common shock, so it over-corrects in global
+crises: the truth lies between raw and adjusted. The VIX is US-centric. Crisis days cluster
+in few episodes (2008, 2020). Local-currency index levels, no FX.

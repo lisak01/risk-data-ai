@@ -59,3 +59,30 @@ STALE_AFTER_DAYS = 4
 DASHBOARD_TITLE = "FX Risk Monitor"
 DASHBOARD_ORG = "Financial Risk"
 DASHBOARD_PATH = OUTPUT_DIR / "dashboard.html"
+
+# --- Task 2: index analysis ----------------------------------------------------
+DIM_MASTER_PATH = DATA_DIR / "dim_master.csv"
+PRICE_HIST_PATH = DATA_DIR / "price_hist.parquet"
+INDEX_OUTPUT_PATH = OUTPUT_DIR / "index_analysis.html"
+
+VIX_TICKER = "VIX.INDX"  # crisis signal only, not part of the correlations
+VIX_CRISIS_LEVEL = 30  # main definition: VIX close above 30 = market distress
+VIX_SENSITIVITY_LEVELS = [20, 25, 30, 35, 40]  # plus the 80% quantile, see the analysis
+
+# NASDAQ Composite and NASDAQ 100 share asset_key US6311011026 (two prices per day).
+NASDAQ_KEY = "US6311011026"
+NASDAQ_AMBIGUOUS_RATIO = 1.01  # closer than 1% -> identity cannot be told from the level
+# Published closing values used to check the split (source: Nasdaq index history).
+NASDAQ_ANCHORS = {  # date: (IXIC, NDX)
+    "2008-01-02": (2609.63, 2049.71),
+    "2021-12-31": (15644.97, 16320.08),
+    "2024-12-31": (19310.79, 21012.17),
+}
+
+# Outliers: flag, do not delete.
+OUTLIER_Z = 5  # |return| > 5 trailing standard deviations ...
+OUTLIER_MARKET_Z = 1.5  # ... while the median other index moved less than 1.5 std
+OUTLIER_VOL_WINDOW = 250  # trading days for the trailing standard deviation
+GAP_DAYS = 14  # a return over more than 14 calendar days spans a data gap
+
+ROLLING_CORR_DAYS = 63  # ~3 months for the rolling average correlation
