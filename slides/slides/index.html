@@ -1,0 +1,31 @@
+<section id="index" data-transition="fade" style="background:#0b1220;color:#e6eaf2;font-family:'Inter', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.1">Task 2: correlations rise in distress</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:48px">
+<div style="display:flex;flex-direction:column;gap:28px">
+<table style="font-size:28px;color:#e6eaf2">
+<tr><th style="width:34%;text-align:left">Avg. pairwise</th><th style="width:22%;text-align:right">Normal</th><th style="width:22%;text-align:right">VIX &gt; 30</th><th style="width:22%;text-align:right">FR-adj.</th></tr>
+<tr><td>Daily</td><td style="text-align:right">0.48</td><td style="text-align:right">0.60</td><td style="text-align:right">0.27</td></tr>
+<tr><td>Weekly</td><td style="text-align:right">0.60</td><td style="text-align:right">0.77</td><td style="text-align:right">0.43</td></tr>
+</table>
+<p style="font-size:26px;color:#c9d1de;line-height:1.45"><b style="color:#e6eaf2">Yes:</b> higher for every VIX level from 20 to 40. After the Forbes-Rigobon volatility adjustment the rise disappears: interdependence, not contagion.</p>
+<p style="font-size:26px;color:#c9d1de;line-height:1.45"><b style="color:#e6eaf2">For risk:</b> the raw number counts. Diversification is weakest when losses are largest. Asia rises most.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:32px;font-weight:600;color:#d95926">Data traps</h3>
+<div style="background:#111a2b;border:1px solid #1f2a3c;border-radius:12px;padding:20px 24px">
+<p style="font-size:24px;line-height:1.4;color:#c9d1de"><b style="color:#e6eaf2">NASDAQ:</b> IXIC and NDX share one key, a naive join adds 9,348 rows. Split by level; 344 crossing days in 2020–21 set missing; 3 published closes match.</p>
+</div>
+<div style="background:#111a2b;border:1px solid #1f2a3c;border-radius:12px;padding:20px 24px">
+<p style="font-size:24px;line-height:1.4;color:#c9d1de"><b style="color:#e6eaf2">Time zones:</b> daily correlations understated; weekly returns as check.</p>
+</div>
+<div style="background:#111a2b;border:1px solid #1f2a3c;border-radius:12px;padding:20px 24px">
+<p style="font-size:24px;line-height:1.4;color:#c9d1de"><b style="color:#e6eaf2">Outliers:</b> 26 flagged, not deleted. SDAX +17% follows a 96-day data gap; KOSPI +16.5% on 31 Jul 2026.</p>
+</div>
+<div style="background:#111a2b;border:1px solid #1f2a3c;border-radius:12px;padding:20px 24px">
+<p style="font-size:24px;line-height:1.4;color:#c9d1de"><b style="color:#e6eaf2">Calendar:</b> 58 weekend rows dropped, 25% volume 0 (unused), own trading days per index.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9aa4b5">5 / 6 · 30 equity indices 2008–2026, VIX only as crisis signal</p>
+<aside>VIX above 30 is a fixed stress level, about 10 percent of days; the 80 percent quantile is 24.4 and gives the same answer. The NASDAQ split cannot be done by level alone: the two series cross several times in 2020 and 2021, on 31 December 2020 both rows are identical. So I set those days to missing instead of guessing.</aside>
+</section>

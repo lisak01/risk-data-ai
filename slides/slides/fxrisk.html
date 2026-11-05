@@ -1,0 +1,35 @@
+<section id="fxrisk" data-transition="fade" style="background:#0b1220;color:#e6eaf2;font-family:'Inter', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.1">Task 1b: five-day FX risk of USD 100,000</h2>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:32px">
+<p style="font-size:26px;color:#9aa4b5;font-weight:600">EUR value today</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700">€89,095</p>
+<p style="font-size:26px;color:#9aa4b5">100,000 / 1.1224</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #3987e5;border-radius:16px;padding:32px">
+<p style="font-size:26px;color:#9aa4b5;font-weight:600">5-day VaR 99%</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700">€2,352</p>
+<p style="font-size:26px;color:#9aa4b5">2.64% of position</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:32px">
+<p style="font-size:26px;color:#9aa4b5;font-weight:600">Expected Shortfall 97.5%</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700">€2,351</p>
+<p style="font-size:26px;color:#9aa4b5">normal benchmark €1,914</p>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:600">Method</h3>
+<p style="font-size:26px;color:#c9d1de;line-height:1.45">Historical simulation on 750 overlapping 5-day changes (3 years). A stronger euro is the loss: loss = 1 − exp(−r). No √5 scaling; the 1-year window gives €1,720.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:600">Backtest, no look-ahead</h3>
+<p style="font-size:26px;color:#c9d1de;line-height:1.45">2001–2026: 72 exceptions in 6,371 days (1.1%, expected 1.0%), Kupiec p = 0.31. Last 250 days: 0 exceptions, Basel green, model conservative.</p>
+</div>
+</div>
+<div style="background:#111a2b;border-left:6px solid #d95926;border-radius:12px;padding:28px 36px">
+<p style="font-size:32px;line-height:1.4">“With 99% confidence, we do not expect to lose more than <b>€2,352</b> in the next 5 trading days.”</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9aa4b5">4 / 6 · ECB reference rate of 5 November 2026</p>
+<aside>Overlapping windows share four of five days, so exceptions cluster and Kupiec is too optimistic. As a check I also run Kupiec on every fifth day only: 16 of 1,275, p = 0.38. The dashboard is one static HTML file, rebuilt on every run.</aside>
+</section>

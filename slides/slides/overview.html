@@ -1,0 +1,58 @@
+<section id="overview" data-transition="fade" style="background:#0b1220;color:#e6eaf2;font-family:'Inter', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.1">Overview: one data flow, three tasks</h2>
+<div style="display:flex;flex-direction:row;align-items:center;gap:16px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">SOURCE</p>
+<p style="font-size:26px;font-weight:600">ECB Data Portal API</p>
+<p style="font-size:24px;color:#9aa4b5">SDMX REST, CSV</p>
+</div>
+<x-connector style="width:48px;color:#3987e5" head="end"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">ADAPTER</p>
+<p style="font-size:26px;font-weight:600">ecb_client.py</p>
+<p style="font-size:24px;color:#9aa4b5">fetch() → date, rate</p>
+</div>
+<x-connector style="width:48px;color:#3987e5" head="end"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">ETL</p>
+<p style="font-size:26px;font-weight:600">etl.py</p>
+<p style="font-size:24px;color:#9aa4b5">checks, upsert, log</p>
+</div>
+<x-connector style="width:48px;color:#3987e5" head="end"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">STORAGE</p>
+<p style="font-size:26px;font-weight:600">DuckDB file</p>
+<p style="font-size:24px;color:#9aa4b5">rates, log, risk</p>
+</div>
+<x-connector style="width:48px;color:#3987e5" head="end"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #3987e5;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">OUTPUT</p>
+<p style="font-size:26px;font-weight:600">dashboard.html</p>
+<p style="font-size:24px;color:#9aa4b5">VaR, ES, backtest</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:16px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">SUPPLIED FILES</p>
+<p style="font-size:26px;font-weight:600">dim_master.csv + price_hist.parquet</p>
+</div>
+<x-connector style="width:48px;color:#d95926" head="end"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #1f2a3c;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">ANALYSIS</p>
+<p style="font-size:26px;font-weight:600">index_analysis.py</p>
+</div>
+<x-connector style="width:48px;color:#d95926" head="end"></x-connector>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#111a2b;border:1px solid #d95926;border-radius:16px;padding:20px">
+<p style="font-size:24px;color:#9aa4b5;font-weight:600">OUTPUT</p>
+<p style="font-size:26px;font-weight:600">index_analysis.html + CSV</p>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;flex-direction:row;gap:32px">
+<p style="flex:1;font-size:30px;color:#c9d1de"><b style="color:#e6eaf2">One command:</b> python run_daily.py</p>
+<p style="flex:1;font-size:30px;color:#c9d1de"><b style="color:#e6eaf2">One config:</b> every parameter in config.py</p>
+<p style="flex:1;font-size:30px;color:#c9d1de"><b style="color:#e6eaf2">Checked:</b> 26 tests, ruff clean</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9aa4b5">2 / 6</p>
+<aside>The adapter is the key idea for a bank with many interfaces: every source returns the same two columns. A legacy file drop uses the same ETL, checks and log - I built a CSV file adapter to show this, and the tests use it.</aside>
+</section>

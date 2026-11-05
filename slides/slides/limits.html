@@ -1,0 +1,38 @@
+<section id="limits" data-transition="fade" style="background:#111a2b;color:#e6eaf2;font-family:'Inter', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.1">Assumptions, limits and the next question</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:600;color:#3987e5">FX risk</h3>
+<ul style="font-size:26px;color:#c9d1de;line-height:1.45">
+<li>ECB rate, no spread or fees</li>
+<li>Past 3 years stand for the next 5 days</li>
+<li>Overlapping windows: Kupiec too optimistic</li>
+<li>Basel light made for 1-day VaR</li>
+</ul>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:600;color:#3987e5">Index analysis</h3>
+<ul style="font-size:26px;color:#c9d1de;line-height:1.45">
+<li>Crisis correlation is partly volatility</li>
+<li>FR over-corrects in global shocks</li>
+<li>VIX is US-centric</li>
+<li>Few crisis episodes (2008, 2020)</li>
+</ul>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:600;color:#3987e5">Data</h3>
+<ul style="font-size:26px;color:#c9d1de;line-height:1.45">
+<li>NASDAQ missing 2020–21</li>
+<li>Flagged outliers excluded, result shown with them too</li>
+<li>Local-currency index levels</li>
+</ul>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#0b1220;border-left:8px solid #d95926;border-radius:12px;padding:36px 40px">
+<p style="font-size:26px;color:#d95926;font-weight:600;text-transform:uppercase;letter-spacing:2px">Next question</p>
+<p style="font-size:34px;line-height:1.4">Is a 3-year window too slow? The last 250 days had 0 exceptions. I would test a volatility-weighted historical simulation (EWMA) against it, with Kupiec and the Christoffersen independence test.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9aa4b5">6 / 6 · Code, README and outputs in the project repository</p>
+<aside>Why this question: the backtest shows the model is conservative right now, because the 3-year window still contains the 2022 to 2025 volatility. A volatility-weighted method reacts faster in both directions. The Christoffersen test checks whether exceptions cluster, which Kupiec cannot see.</aside>
+</section>
