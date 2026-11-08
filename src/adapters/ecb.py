@@ -1,39 +1,18 @@
-"""Source adapters: fetch raw data and return it in one standard shape.
+"""Adapter for the ECB Data Portal API (SDMX REST, CSV format).
 
-Every adapter returns a DataFrame with exactly two columns:
-    rate_date (datetime64, one row per day)
-    rate      (float)
-
-The ETL only talks to this interface. A new source (another API, a legacy
-file drop, a database) gets its own adapter class with a `fetch` method;
-the ETL, the quality checks and the database code stay unchanged.
+Only fetching and parsing happens here; checks and loading are done by the ETL.
 """
 
 from __future__ import annotations
 
 import io
 import time
-from abc import ABC, abstractmethod
-from pathlib import Path
 
 import pandas as pd
 import requests
 
 import config
-
-
-class SourceError(RuntimeError):
-    """Raised when a source cannot deliver data (network down, bad format, ...)."""
-
-
-class SourceAdapter(ABC):
-    """Common interface for all data sources."""
-
-    name: str = "source"
-
-    @abstractmethod
-    def fetch(self, start_date: str | None = None) -> pd.DataFrame:
-        """Return all observations on or after start_date (YYYY-MM-DD)."""
+from src.adapters.base import SourceAdapter, SourceError, empty_frame
 
 
 class EcbClient(SourceAdapter):
@@ -102,8 +81,7 @@ def parse_ecb_csv(text: str) -> pd.DataFrame:
     Dates and values are parsed here; checking them is the job of the ETL.
     """
     if not text.strip():
-        return pd.DataFrame({"rate_date": pd.Series(dtype="datetime64[ns]"),
-                             "rate": pd.Series(dtype="float64")})
+        return empty_frame()
 
     raw = pd.read_csv(io.StringIO(text), dtype=str)
     missing = {"TIME_PERIOD", "OBS_VALUE"} - set(raw.columns)
@@ -122,24 +100,3 @@ def parse_ecb_csv(text: str) -> pd.DataFrame:
         "rate_date": pd.to_datetime(raw["TIME_PERIOD"], format="%Y-%m-%d", errors="coerce"),
         "rate": pd.to_numeric(raw["OBS_VALUE"], errors="coerce"),
     })
-
-
-class CsvFileAdapter(SourceAdapter):
-    """Adapter for a local CSV file in the ECB format.
-
-    Used for offline runs and tests. It also shows how a legacy file-based
-    interface plugs into the same ETL as a modern REST API.
-    """
-
-    name = "csv_file"
-
-    def __init__(self, path: str | Path):
-        self.path = Path(path)
-
-    def fetch(self, start_date: str | None = None) -> pd.DataFrame:
-        if not self.path.exists():
-            raise SourceError(f"File not found: {self.path}")
-        df = parse_ecb_csv(self.path.read_text(encoding="utf-8"))
-        if start_date:
-            df = df[df["rate_date"] >= pd.Timestamp(start_date)]
-        return df.reset_index(drop=True)

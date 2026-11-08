@@ -3,28 +3,54 @@
 Three tasks in one project: an ECB exchange-rate ETL (1a), a daily FX-risk
 dashboard (1b) and an index correlation analysis (2).
 
-## Setup
+## Quick start: one command, everything on one web page
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m pytest        # tests, no network needed
-ruff check .            # lint
+python run_all.py
 ```
 
+`run_all.py` loads the ECB rates, runs the index analysis, the tests (pytest) and the code
+check (ruff), builds the portal `output/dashboard.html` and opens it in the browser.
 Input files for Task 2 (`dim_master.csv`, `price_hist.parquet`) go into `data/`.
+
+The portal has six tabs:
+- **Dashboard** - status bar (data, load, tests, code, backtest), KPI cards, charts, one plain sentence
+- **Risk Analytics** - method comparison, backtest chart, assumptions and limits
+- **Index Analysis** - Task 2 answer, charts, data traps
+- **Data Pipeline** - connectable sources (ECB, files, S3, Azure, GCS), architecture, load log, tables
+- **Quality** - every test with its result, ruff result
+- **Design Decisions** - what was asked, what was built, why; case requirements checklist
+
+Other commands:
+```bash
+python run_daily.py            # scheduled job: ETL daily + rebuild portal (no tests, no browser)
+python -m pytest               # tests only
+ruff check .                   # code check only
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs ruff and pytest on every push.
 
 ## Architecture
 
 ```
- ECB Data Portal API ──┐
- (SDMX REST, CSV)      │   src/ecb_client.py          src/etl.py                  data/risk.duckdb
-                       ├─> SourceAdapter.fetch() ──>  checks -> upsert -> log ──> fx_rates
- Local CSV file  ──────┘   (EcbClient,                                            etl_load_log
- (offline / legacy)         CsvFileAdapter)                                           │
-                                                                                      v
-                                                                        src/fx_risk.py -> output/dashboard.html
+ Sources                     Adapter layer (src/adapters/)       src/etl.py               data/risk.duckdb
+ ECB REST API ───────────┐   SourceAdapter.fetch()               checks -> upsert -> log   fx_rates
+ local / network file ───┤   -> (rate_date, rate)          ──>                       ──>  etl_load_log
+ s3:// az:// gs:// ──────┘   EcbClient, FileAdapter (fsspec)                               fx_risk_history
+                                                                                               │
+                                          src/fx_risk.py + src/index_analysis.py + src/portal.py
+                                                                                               v
+                                                                                 output/dashboard.html
 ```
+
+**Sources and clouds.** The daily source is one line in `config.py`:
+`FX_SOURCE = "ecb"`. Any file URI works with the same ETL, checks and log:
+`"s3://bank-raw/ecb/usd_eur.csv"` (Amazon S3, needs `s3fs`), `"az://raw/ecb/usd_eur.csv"`
+(Azure, needs `adlfs`), `"gs://..."` (Google, needs `gcsfs`) or a local path. Credentials come
+from each cloud's standard credential chain (managed identity, IAM role, environment), never
+from the code. A new source type is one small class with a `fetch()` method.
 
 All parameters are in `config.py`.
 
@@ -33,7 +59,7 @@ All parameters are in `config.py`.
 ```bash
 python -m src.etl --initial     # full history since 1999, table rebuilt
 python -m src.etl --daily       # only new days
-python -m src.etl --daily --source-file path/to/ecb.csv   # same flow from a file
+python -m src.etl --daily --source s3://bucket/usd_eur.csv   # same flow, other source
 ```
 
 **Source.** Series `EXR.D.USD.EUR.SP00.A`: daily ECB euro reference rate,
@@ -101,8 +127,8 @@ python run_daily.py          # ETL daily (initial if the DB is empty) + rebuild 
 ```
 
 Open `output/dashboard.html` in any browser. It is one self-contained file
-(Plotly embedded, works offline) and is rebuilt on every run. Building the dashboard
-only: `python -m src.dashboard`.
+(Plotly embedded, works offline) and is rebuilt on every run. Building the portal
+only: `python -m src.portal`.
 
 **Position and quote direction.** The bank holds USD 100,000 and converts within
 5 days. The ECB quotes **USD per 1 EUR** (e.g. 1.08), so

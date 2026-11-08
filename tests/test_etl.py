@@ -5,8 +5,9 @@ import pandas as pd
 import pytest
 import requests
 
-from src import ecb_client, etl
-from src.ecb_client import CsvFileAdapter, EcbClient, SourceError
+from src import etl
+from src.adapters import EcbClient, FileAdapter, SourceError, make_adapter
+from src.adapters import ecb as ecb_client
 from tests.conftest import ecb_csv, write_csv
 
 # Ten TARGET business days in January 2024 (1 Jan is a holiday).
@@ -26,25 +27,25 @@ def test_initial_then_daily_is_idempotent(tmp_path):
     first = write_csv(tmp_path / "a.csv", DATES[:7], RATES[:7])
     full = write_csv(tmp_path / "b.csv", DATES, RATES)
 
-    assert etl.run("initial", CsvFileAdapter(first), db)["status"] == "OK"
+    assert etl.run("initial", FileAdapter(first), db)["status"] == "OK"
     assert rows(db) == (7, 7)
 
-    log1 = etl.run("daily", CsvFileAdapter(full), db)
+    log1 = etl.run("daily", FileAdapter(full), db)
     assert log1["rows_new"] == 3
-    log2 = etl.run("daily", CsvFileAdapter(full), db)  # same data again
+    log2 = etl.run("daily", FileAdapter(full), db)  # same data again
     assert log2["rows_new"] == 0
     assert rows(db) == (10, 10)  # no duplicates
 
 
 def test_initial_rebuilds_table(tmp_path):
     db = tmp_path / "t.duckdb"
-    etl.run("initial", CsvFileAdapter(write_csv(tmp_path / "a.csv", DATES, RATES)), db)
-    etl.run("initial", CsvFileAdapter(write_csv(tmp_path / "b.csv", DATES[:4], RATES[:4])), db)
+    etl.run("initial", FileAdapter(write_csv(tmp_path / "a.csv", DATES, RATES)), db)
+    etl.run("initial", FileAdapter(write_csv(tmp_path / "b.csv", DATES[:4], RATES[:4])), db)
     assert rows(db) == (4, 4)
 
 
 def test_daily_without_initial_fails_clearly(tmp_path):
-    log = etl.run("daily", CsvFileAdapter(write_csv(tmp_path / "a.csv", DATES, RATES)),
+    log = etl.run("daily", FileAdapter(write_csv(tmp_path / "a.csv", DATES, RATES)),
                   tmp_path / "t.duckdb")
     assert log["status"] == "FAILED" and "--initial" in log["message"]
 
@@ -55,9 +56,9 @@ def test_daily_without_initial_fails_clearly(tmp_path):
 ])
 def test_bad_batch_is_rejected_and_old_data_kept(tmp_path, bad_rates, bad_dates, check):
     db = tmp_path / "t.duckdb"
-    etl.run("initial", CsvFileAdapter(write_csv(tmp_path / "ok.csv", DATES, RATES)), db)
+    etl.run("initial", FileAdapter(write_csv(tmp_path / "ok.csv", DATES, RATES)), db)
     dates = bad_dates or DATES[:3]
-    log = etl.run("initial", CsvFileAdapter(write_csv(tmp_path / "bad.csv", dates, bad_rates)), db)
+    log = etl.run("initial", FileAdapter(write_csv(tmp_path / "bad.csv", dates, bad_rates)), db)
     assert log["status"] == "FAILED"
     assert log["checks"]["batch"][check] is False
     assert rows(db) == (10, 10)  # transaction not even started -> old data intact
@@ -65,7 +66,7 @@ def test_bad_batch_is_rejected_and_old_data_kept(tmp_path, bad_rates, bad_dates,
 
 def test_every_run_is_logged(tmp_path):
     db = tmp_path / "t.duckdb"
-    src = CsvFileAdapter(write_csv(tmp_path / "a.csv", DATES, RATES))
+    src = FileAdapter(write_csv(tmp_path / "a.csv", DATES, RATES))
     etl.run("initial", src, db)
     etl.run("daily", src, db)
     con = duckdb.connect(str(db))
@@ -123,3 +124,30 @@ def test_ecb_holiday_rows_are_dropped_but_other_gaps_are_not():
     df = ecb_client.parse_ecb_csv(text)
     assert len(df) == 3  # holiday row removed
     assert etl.check_batch(df)["valid_values"] is False  # empty value without H is an error
+
+
+def test_same_etl_reads_from_a_cloud_bucket(tmp_path):
+    """memory:// behaves like s3:// or az://: same adapter, same ETL, same checks."""
+    import fsspec
+
+    with fsspec.open("memory://bank-raw/ecb/usd_eur.csv", "wt") as f:
+        f.write(ecb_csv(DATES, RATES))
+    adapter = make_adapter("memory://bank-raw/ecb/usd_eur.csv")
+    log = etl.run("initial", adapter, tmp_path / "t.duckdb")
+    assert log["status"] == "OK" and log["rows_new"] == 10
+    assert log["source"] == "file_memory"
+
+
+def test_missing_cloud_driver_gives_clear_error(monkeypatch):
+    import fsspec
+
+    def no_driver(*a, **k):
+        raise ImportError("Install s3fs to access S3")
+    monkeypatch.setattr(fsspec, "open", no_driver)
+    with pytest.raises(SourceError, match="Missing driver"):
+        FileAdapter("s3://bank-raw/usd_eur.csv").fetch()
+
+
+def test_make_adapter_picks_by_name_or_uri():
+    assert isinstance(make_adapter("ecb"), EcbClient)
+    assert make_adapter("az://raw/usd_eur.csv").name == "file_az"

@@ -1,7 +1,9 @@
-"""One command for the whole daily workflow: ETL (daily) + dashboard.
+"""The scheduled daily job: ETL (daily) + rebuild the portal. No browser, no tests.
 
-    python run_daily.py                  # normal daily run
-    python run_daily.py --source-file x  # offline run from an ECB-format CSV
+    python run_daily.py                         # source from config.FX_SOURCE (ECB API)
+    python run_daily.py --source s3://b/x.csv   # any other source, same flow
+
+For everything at once (incl. tests, opening the page) use: python run_all.py
 
 If the database is still empty, the initial load runs first. Exit code 1 if the
 ETL fails; the dashboard is then still rebuilt from the last good data, and its
@@ -14,8 +16,8 @@ import sys
 import duckdb
 
 import config
-from src import dashboard, etl
-from src.ecb_client import CsvFileAdapter, EcbClient
+from src import etl, portal
+from src.adapters import make_adapter
 
 
 def has_data() -> bool:
@@ -32,9 +34,10 @@ def has_data() -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-file", help="read an ECB-format CSV instead of the API")
+    parser.add_argument("--source", default=config.FX_SOURCE,
+                        help="'ecb' (API) or a file URI: local path, s3://, az://, gs://")
     args = parser.parse_args()
-    adapter = CsvFileAdapter(args.source_file) if args.source_file else EcbClient()
+    adapter = make_adapter(args.source)
 
     mode = "daily" if has_data() else "initial"
     log = etl.run(mode, adapter)
@@ -43,7 +46,7 @@ def main() -> int:
     if not has_data():
         print("No data in the database - dashboard not built.")
         return 1
-    print(f"Dashboard written to {dashboard.build()}")
+    print(f"Portal written to {portal.build()}")
     return 1 if log["status"] == "FAILED" else 0
 
 

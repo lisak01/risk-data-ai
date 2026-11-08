@@ -4,6 +4,9 @@ pandas==3.0.5
 pyarrow==26.0.1
 python-dateutil==2.9.0.post0
 requests==2.34.2
+fsspec==2026.9.0
+# Optional cloud drivers, install only what you use:
+#   s3fs (Amazon S3), adlfs (Azure Blob/ADLS), gcsfs (Google Cloud Storage)
 plotly==7.1.0
 pytest==9.2.0
 ruff==0.17.3

@@ -294,7 +294,8 @@ def heatmap(corr: pd.DataFrame, title: str, diverging: bool = False) -> go.Figur
     return fig
 
 
-def build_report(res: dict) -> str:
+def report_body(res: dict) -> str:
+    """The report content (cards and charts), used standalone and in the portal."""
     d, w, dwo = res["daily"], res["weekly"], res["daily_with_outliers"]
     order = d["normal"].mean().sort_values().index  # least to most connected
 
@@ -350,7 +351,8 @@ def build_report(res: dict) -> str:
     f.update_yaxes(title="Price ratio of the two rows")
     figs.append(f)
 
-    divs = [fg.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
+    divs = [fg.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False,
+                                                                     "responsive": True})
             for fg in figs]
 
     def row(label, r):
@@ -464,6 +466,12 @@ independent events.</li>
 <li>Pearson correlation is sensitive to single large moves; hence the outlier treatment.</li>
 <li>Index levels in local currency; no FX effect.</li>
 </ul></div>"""
+    return body
+
+
+def build_report(res: dict) -> str:
+    """Standalone page: output/index_analysis.html."""
+    body = report_body(res)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Index Analysis</title><script>{get_plotlyjs()}</script>
@@ -484,8 +492,8 @@ independent events.</li>
 {body}</main></body></html>"""
 
 
-def main() -> None:
-    res = analyse()
+def save_outputs(res: dict) -> None:
+    """Standalone report and CSV tables in output/."""
     config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     config.INDEX_OUTPUT_PATH.write_text(build_report(res), encoding="utf-8")
     res["flags"].to_csv(config.OUTPUT_DIR / "index_outliers.csv", index=False)
@@ -494,6 +502,11 @@ def main() -> None:
     for name in ("normal", "crisis"):
         res["daily"][name].round(3).to_csv(config.OUTPUT_DIR / f"index_corr_daily_{name}.csv")
         res["weekly"][name].round(3).to_csv(config.OUTPUT_DIR / f"index_corr_weekly_{name}.csv")
+
+
+def main() -> None:
+    res = analyse()
+    save_outputs(res)
     d, w = res["daily"], res["weekly"]
     print(f"Average pairwise correlation  normal -> crisis (FR-adjusted)\n"
           f"  daily : {d['avg_normal']:.2f} -> {d['avg_crisis']:.2f} ({d['avg_fr']:.2f})\n"

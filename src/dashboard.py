@@ -1,9 +1,7 @@
-"""Build the board dashboard: one static HTML file (output/dashboard.html).
-
-    python -m src.dashboard
+"""FX-risk part of the portal: KPI cards, charts and texts for Tasks 1a/1b.
 
 Reads the rates and the ETL log from DuckDB, computes the risk figures with
-src/fx_risk.py and writes a self-contained HTML page (Plotly embedded, works offline).
+src/fx_risk.py and returns the values that src/portal.py puts into the page.
 """
 
 from __future__ import annotations
@@ -16,7 +14,6 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.offline import get_plotlyjs
 
 import config
 from src import fx_risk
@@ -181,7 +178,8 @@ def fig_html(fig: go.Figure) -> str:
 # --- Page --------------------------------------------------------------------
 
 
-def build_html(d: dict) -> str:
+def fx_values(d: dict) -> dict:
+    """All FX placeholders of the portal template, as {name: html}."""
     s, ss, bt = d["snap"], d["snap_short"], d["bt"]
     etl, rates, roll = d["etl"], d["rates"], d["roll"]
     as_of = s["as_of"]
@@ -243,11 +241,10 @@ def build_html(d: dict) -> str:
     table = "".join(f"<tr><td>{n}</td><td class='num'>{eur(v)}</td>"
                     f"<td class='num'>{pct(p)}</td></tr>" for n, v, p in rows)
 
-    generated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-    template = (Path(__file__).parent / "dashboard_template.html").read_text(encoding="utf-8")
-    values = {
-        "TITLE": html.escape(config.DASHBOARD_TITLE),
-        "ORG": html.escape(config.DASHBOARD_ORG),
+    return {
+        # status flags for the portal's status bar (not placeholders)
+        "_fresh": fresh, "_etl_ok": etl_ok, "_etl_status": etl_status, "_age": age,
+        "_zone": zone,
         "USD": f"{config.POSITION_USD:,.0f}",
         "H": str(h),
         "AS_OF": f"{as_of:%b %d, %Y}",
@@ -278,22 +275,6 @@ def build_html(d: dict) -> str:
         "SCEN": f"{s['n_scenarios']:,}",
         "SERIES": config.SERIES_ID,
         "SOURCE": html.escape(str(etl.get("source", "n/a"))),
-        "GENERATED": generated,
         "DATA_JSON": json.dumps({"as_of": f"{as_of:%Y-%m-%d}", "var_eur": round(s["var_eur"], 2),
                                  "es_eur": round(s["es_eur"], 2)}),
     }
-    for key, val in values.items():
-        template = template.replace("{{" + key + "}}", val)
-    # Plotly's JavaScript last, so the placeholders above are never searched inside it.
-    return template.replace("{{PLOTLY_JS}}", get_plotlyjs())
-
-
-def build(db_path: Path = config.DUCKDB_PATH, out: Path = config.DASHBOARD_PATH) -> Path:
-    out = Path(out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build_html(collect(db_path)), encoding="utf-8")
-    return out
-
-
-if __name__ == "__main__":
-    print(f"Dashboard written to {build()}")

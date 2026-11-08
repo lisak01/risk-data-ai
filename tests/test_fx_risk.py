@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from plotly.offline import get_plotlyjs
 
-from src import dashboard, etl, fx_risk
-from src.ecb_client import CsvFileAdapter
+from src import etl, fx_risk, portal
+from src.adapters import FileAdapter
 from tests.conftest import write_csv
 
 
@@ -78,8 +78,8 @@ def test_dashboard_builds_from_database(tmp_path):
     rates = synthetic_rates()
     src = write_csv(tmp_path / "r.csv", rates.index, rates.round(4).values)
     db = tmp_path / "t.duckdb"
-    etl.run("initial", CsvFileAdapter(src), db)
-    out = dashboard.build(db, tmp_path / "d.html")
+    etl.run("initial", FileAdapter(src), db)
+    out = portal.build(db, tmp_path / "d.html", include_index=False)
     page = out.read_text(encoding="utf-8")
     assert "{{" not in page.replace(get_plotlyjs(), "")  # all placeholders filled
     assert "With 99% confidence" in page

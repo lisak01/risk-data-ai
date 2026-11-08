@@ -3,7 +3,7 @@
 Usage:
     python -m src.etl --initial      # full history, table rebuilt
     python -m src.etl --daily        # only new days, idempotent upsert
-    python -m src.etl --daily --source-file some.csv   # offline: same flow, file source
+    python -m src.etl --daily --source s3://bucket/usd_eur.csv   # any other source, same flow
 
 Flow of one run:
     1. extract   adapter.fetch(start_date)             -> DataFrame(rate_date, rate)
@@ -26,7 +26,7 @@ import pandas as pd
 from dateutil.easter import easter
 
 import config
-from src.ecb_client import CsvFileAdapter, EcbClient, SourceAdapter, SourceError
+from src.adapters import SourceAdapter, SourceError, make_adapter
 
 # --- Database schema ---------------------------------------------------------
 
@@ -231,11 +231,12 @@ def main(argv: list[str] | None = None) -> int:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--initial", action="store_true", help="full history, rebuild table")
     group.add_argument("--daily", action="store_true", help="only new days (upsert)")
-    parser.add_argument("--source-file", help="read an ECB-format CSV instead of the API")
+    parser.add_argument("--source", default=config.FX_SOURCE,
+                        help="'ecb' (API) or a file URI: local path, s3://, az://, gs://")
     parser.add_argument("--db", default=str(config.DUCKDB_PATH), help="DuckDB file path")
     args = parser.parse_args(argv)
 
-    adapter = CsvFileAdapter(args.source_file) if args.source_file else EcbClient()
+    adapter = make_adapter(args.source)
     log = run("initial" if args.initial else "daily", adapter, Path(args.db))
 
     print(f"[{log['status']}] mode={log['mode']} source={log['source']} "

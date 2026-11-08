@@ -19,6 +19,12 @@ DUCKDB_PATH = DATA_DIR / "risk.duckdb"
 ECB_BASE_URL = "https://data-api.ecb.europa.eu/service/data"
 ECB_FLOW = "EXR"
 ECB_SERIES_KEY = "D.USD.EUR.SP00.A"
+
+# Where the daily run reads the rate from. "ecb" = the ECB REST API.
+# Any file URI works too, with the same ETL, checks and log, e.g.
+#   "s3://bank-raw/ecb/usd_eur.csv"  (Amazon S3)   "az://raw/ecb/usd_eur.csv"  (Azure)
+#   "gs://bank-raw/ecb/usd_eur.csv"  (Google)      "data/usd_eur.csv"          (local)
+FX_SOURCE = "ecb"
 SERIES_ID = f"{ECB_FLOW}.{ECB_SERIES_KEY}"  # name used in the database
 
 # Full history: the euro reference rate starts on 1999-01-04.
@@ -55,9 +61,12 @@ BACKTEST_DAYS = 250
 # Data older than this many calendar days is flagged as stale on the dashboard.
 STALE_AFTER_DAYS = 4
 
-# Text in the dashboard header (no logos or personal data in the repo).
-DASHBOARD_TITLE = "FX Risk Monitor"
-DASHBOARD_ORG = "Financial Risk"
+# --- Portal (the web page built by run_all.py) ----------------------------------
+DASHBOARD_TITLE = "Risk Data Portal"
+BRAND_NAME = "flatexDEGIRO"  # shown as text in the sidebar
+BRAND_UNIT = "Financial Risk"
+# Optional logo file (svg/png). If it exists it replaces the text; not part of the repo.
+LOGO_PATH = PROJECT_ROOT / "assets" / "logo.svg"
 DASHBOARD_PATH = OUTPUT_DIR / "dashboard.html"
 
 # --- Task 2: index analysis ----------------------------------------------------
